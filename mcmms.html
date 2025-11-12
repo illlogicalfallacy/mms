@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>McMessage Splitter</title>
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --text-dark: #f5f5f5;
+      --card-dark: #1e1e1e;
+      --border-dark: #333;
+
+      --bg-light: #ffffff;
+      --text-light: #333;
+      --card-light: #f9f9f9;
+      --border-light: #858687;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    body.light-theme {
+      background-color: var(--bg-light);
+      color: var(--text-light);
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    #theme-toggle-container {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 999;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #888;
+      transition: 0.4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    textarea {
+      width: 100%;
+      max-width: 600px;
+      height: 100px;
+      padding: 10px;
+      font-size: 16px;
+      resize: both;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #generateButton {
+      background-color: #007bff;
+      color: white;
+    }
+
+    #generateButton:hover {
+      background-color: #0056b3;
+    }
+
+    #clearButton {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    #clearButton:hover {
+      background-color: #a71d2a;
+    }
+
+    #customizationButton {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    #customizationButton:hover {
+      background-color: #495057;
+    }
+
+    #charCount {
+      font-size: 14px;
+    }
+
+    #output {
+      margin-top: 20px;
+    }
+
+    .message-container {
+      position: relative;
+      margin-bottom: 15px;
+      padding: 15px 10px 10px 10px;
+      border-radius: 6px;
+      max-width: 600px;
+      word-wrap: break-word;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      background-color: var(--card-dark);
+      border: 1px solid var(--border-dark);
+    }
+
+    body.light-theme .message-container {
+      background-color: var(--card-light);
+      border: 1px solid var(--border-light);
+    }
+
+    .copy-button {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      padding: 5px 10px;
+      font-size: 12px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .copy-button:hover {
+      background-color: #218838;
+    }
+
+    #customization-panel {
+      margin-top: 10px;
+      padding: 15px;
+      border-radius: 5px;
+      background-color: var(--card-dark);
+      border: 1px solid var(--border-dark);
+      max-width: 600px;
+      display: none;
+    }
+
+    body.light-theme #customization-panel {
+      background-color: var(--card-light);
+      border: 1px solid var(--border-light);
+    }
+
+    #customization-panel label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    #charLimitSlider {
+      width: 100%;
+    }
+
+    .customization-footer {
+      margin-top: 10px;
+    }
+
+    input[type="number"] {
+      width: 100px;
+      margin-left: 10px;
+    }
+
+    .message-container span {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+      font-weight: bold;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="theme-toggle-container">
+    <label class="switch">
+      <input type="checkbox" id="themeToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <h2>McMessage Splitter</h2>
+
+  <textarea id="inputText" placeholder="Enter your message..."></textarea>
+
+  <div class="button-group">
+    <button id="generateButton">Generate MMS</button>
+    <button id="clearButton">Clear</button>
+    <button id="customizationButton">Customization</button>
+  </div>
+
+  <p id="charCount">Characters: 0</p>
+
+  <div id="customization-panel">
+    <label><input type="checkbox" id="liveUpdate"> Live Update</label>
+    <label><input type="checkbox" id="preserveFormatting"> Preserve Formatting</label>
+    <label><input type="checkbox" id="punctuateCapitalize"> Punctuation/Capitalize</label>
+    <label><input type="checkbox" id="adjustCharLimit"> Adjust Character Limit</label>
+
+    <div id="charLimitControls" style="display: none;">
+      <input type="range" id="charLimitSlider" min="600" max="100000" step="100" value="2000">
+      <span id="charLimitValue">2000</span>
+      <input type="number" id="charLimitInput" value="2000" min="1" />
+      <button id="resetCharLimit">Reset Limit</button>
+    </div>
+
+    <div class="customization-footer">
+      <button id="resetToggles">Reset Toggles</button>
+      <button id="hideCustomization">Hide Customization</button>
+    </div>
+  </div>
+
+  <div id="output"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const inputText = document.getElementById("inputText");
+      const generateButton = document.getElementById("generateButton");
+      const clearButton = document.getElementById("clearButton");
+      const output = document.getElementById("output");
+      const charCount = document.getElementById("charCount");
+      const customizationButton = document.getElementById("customizationButton");
+      const customizationPanel = document.getElementById("customization-panel");
+      const liveUpdate = document.getElementById("liveUpdate");
+      const preserveFormatting = document.getElementById("preserveFormatting");
+      const punctuateCapitalize = document.getElementById("punctuateCapitalize");
+      const adjustCharLimit = document.getElementById("adjustCharLimit");
+      const charLimitSlider = document.getElementById("charLimitSlider");
+      const charLimitInput = document.getElementById("charLimitInput");
+      const charLimitValue = document.getElementById("charLimitValue");
+      const resetCharLimit = document.getElementById("resetCharLimit");
+      const resetToggles = document.getElementById("resetToggles");
+      const hideCustomization = document.getElementById("hideCustomization");
+      const themeToggle = document.getElementById("themeToggle");
+
+      let charLimit = 2000;
+
+      themeToggle.addEventListener("change", () => {
+        document.body.classList.toggle("light-theme");
+      });
+
+      inputText.addEventListener("input", () => {
+        charCount.textContent = `Characters: ${inputText.value.length}`;
+        if (liveUpdate.checked) {
+          generateMMS();
+        }
+      });
+
+      customizationButton.addEventListener("click", () => {
+        customizationPanel.style.display = "block";
+      });
+
+      hideCustomization.addEventListener("click", () => {
+        customizationPanel.style.display = "none";
+      });
+
+      adjustCharLimit.addEventListener("change", () => {
+        document.getElementById("charLimitControls").style.display = adjustCharLimit.checked ? "block" : "none";
+      });
+
+      charLimitSlider.addEventListener("input", () => {
+        charLimit = parseInt(charLimitSlider.value);
+        charLimitValue.textContent = charLimit;
+        charLimitInput.value = charLimit;
+        if (liveUpdate.checked) generateMMS();
+      });
+
+      charLimitInput.addEventListener("input", () => {
+        const manualValue = parseInt(charLimitInput.value);
+        if (!isNaN(manualValue)) {
+          charLimit = manualValue;
+          charLimitValue.textContent = manualValue;
+          if (manualValue >= parseInt(charLimitSlider.min) && manualValue <= parseInt(charLimitSlider.max)) {
+            charLimitSlider.value = manualValue;
+          }
+          if (liveUpdate.checked) generateMMS();
+        }
+      });
+
+      resetCharLimit.addEventListener("click", () => {
+        charLimit = 2000;
+        charLimitSlider.value = 2000;
+        charLimitInput.value = 2000;
+        charLimitValue.textContent = 2000;
+        if (liveUpdate.checked) generateMMS();
+      });
+
+      resetToggles.addEventListener("click", () => {
+        liveUpdate.checked = false;
+        preserveFormatting.checked = false;
+        punctuateCapitalize.checked = false;
+        adjustCharLimit.checked = false;
+        document.getElementById("charLimitControls").style.display = "none";
+        resetCharLimit.click();
+      });
+
+      generateButton.addEventListener("click", generateMMS);
+
+      clearButton.addEventListener("click", () => {
+        inputText.value = "";
+        charCount.textContent = "Characters: 0";
+        output.innerHTML = "";
+      });
+
+      function generateMMS() {
+        let text = inputText.value;
+
+        if (punctuateCapitalize.checked) {
+          text = text.replace(/(?:^|\. +)([a-z])/g, (match, p1) => {
+            return match.replace(p1, p1.toUpperCase());
+          }).replace(/\.([^\s])/g, '. $1');
+        }
+
+        const messages = splitTextIntoMMS(text);
+        output.innerHTML = "";
+
+        messages.forEach((message, index) => {
+          const messageDiv = document.createElement("div");
+          messageDiv.classList.add("message-container");
+
+          const messageLabel = document.createElement("span");
+          messageLabel.textContent = `MMS #${index + 1}`;
+
+          const messageContent = document.createElement("p");
+          if (preserveFormatting.checked) {
+            messageContent.style.whiteSpace = "pre-wrap";
+          }
+          messageContent.textContent = message;
+
+          const copyButton = document.createElement("button");
+          copyButton.classList.add("copy-button");
+          copyButton.textContent = "Copy MMS";
+
+          copyButton.addEventListener("click", () => {
+            navigator.clipboard.writeText(message)
+              .then(() => {
+                copyButton.textContent = "✓ Copied";
+                setTimeout(() => {
+                  copyButton.textContent = "Copy MMS";
+                }, 1500);
+              })
+              .catch((err) => {
+                console.error("Copy failed:", err);
+                alert("Failed to copy message. Please try again.");
+              });
+          });
+
+          messageDiv.appendChild(messageLabel);
+          messageDiv.appendChild(copyButton);
+          messageDiv.appendChild(messageContent);
+          output.appendChild(messageDiv);
+        });
+      }
+
+      function splitTextIntoMMS(text) {
+        const words = text.split(" ");
+        const messages = [];
+        let currentMessage = "";
+
+        for (const word of words) {
+          if ((currentMessage + (currentMessage ? " " : "") + word).length <= charLimit) {
+            currentMessage += (currentMessage ? " " : "") + word;
+          } else {
+            messages.push(currentMessage);
+            currentMessage = word;
+          }
+        }
+
+        if (currentMessage) {
+          messages.push(currentMessage);
+        }
+
+        return messages;
+      }
+
+      document.body.classList.remove("light-theme");
+    });
+  </script>
+</body>
+</html>
